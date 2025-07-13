@@ -157,6 +157,17 @@ const DownloadForm = () => {
             </p>
             {isMobile && lastDownloadUrl && (
               <>
+                {/* New: Direct download link for mobile */}
+                <a
+                  href={lastDownloadUrl}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="download-btn"
+                  style={{ display: 'block', marginBottom: 12, textAlign: 'center', background: '#fe2c55', color: '#fff', padding: '12px 0', borderRadius: 8, fontWeight: 600, fontSize: 17, textDecoration: 'none' }}
+                >
+                  ⬇️ Download Video
+                </a>
                 <Button onClick={handleSaveToDevice} className="download-btn" style={{ marginBottom: 12 }}>
                   Save to Device
                 </Button>
