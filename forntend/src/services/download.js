@@ -1,6 +1,6 @@
 import api from './api';
 
-export const downloadVideo = async (url) => {
+export const downloadVideo = async (url, progressCallback, isMobileDesktopSite = false) => {
   try {
     console.log('🚀 Starting TikTok download for URL:', url);
     const response = await api.post('/api/download', { url });
@@ -15,12 +15,13 @@ export const downloadVideo = async (url) => {
       // Detect mobile device
       const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-      if (isMobile) {
+      // If on mobile but desktop site is enabled, treat as desktop
+      if (isMobile && !isMobileDesktopSite) {
         // On mobile, use the backend proxy endpoint to bypass CORS
         const proxyUrl = `${import.meta.env.VITE_API_URL || ''}/api/download/proxy?url=${encodeURIComponent(result.downloadUrl)}`;
         window.open(proxyUrl, '_blank');
       } else {
-        // On desktop, fetch as blob and trigger download
+        // On desktop or mobile with desktop site, fetch as blob and trigger download
         try {
           const fileResponse = await fetch(result.downloadUrl);
           if (fileResponse.ok) {

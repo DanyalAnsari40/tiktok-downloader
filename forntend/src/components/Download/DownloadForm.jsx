@@ -15,6 +15,11 @@ const DownloadForm = () => {
   const [showMobileError, setShowMobileError] = useState(false);
   const { downloadVideo } = useContext(DownloadContext);
 
+  // Helper: Detect if user is on mobile
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  // Helper: Detect if user is on mobile but has enabled desktop site (window width > 900px)
+  const isMobileDesktopSite = isMobile && window.innerWidth > 900;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!url.trim()) return;
@@ -28,10 +33,11 @@ const DownloadForm = () => {
     setShowMobileError(false);
 
     try {
+      // If on mobile but desktop site is enabled, treat as desktop
       const result = await downloadVideo(url, (progressData) => {
         setProgress(progressData.progress || 0);
         setDownloadStatus(progressData.status || 'Downloading...');
-      });
+      }, isMobileDesktopSite);
       setDownloadStatus('Download completed!');
       setUrl(''); // Clear URL after successful download
       setShowPostDownload(true);
@@ -46,7 +52,7 @@ const DownloadForm = () => {
       setError(error.message || 'Download failed. Please try again.');
       setDownloadStatus('Download failed!');
       // Show mobile-friendly error if on mobile
-      if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      if (isMobile && !isMobileDesktopSite) {
         setShowMobileError(true);
       }
       setTimeout(() => {
@@ -57,9 +63,6 @@ const DownloadForm = () => {
       }, 3000);
     }
   };
-
-  // Detect mobile device
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   // Handler for Save to Device button
   const handleSaveToDevice = () => {
@@ -165,7 +168,7 @@ const DownloadForm = () => {
         </div>
       )}
 
-      {/* Mobile-friendly error popup with animation */}
+      {/* Mobile-friendly error popup with animation and Desktop Site tip */}
       {showMobileError && (
         <div className="download-popup">
           <div className="download-popup-content" style={{ textAlign: 'center', animation: 'shake 0.5s' }}>
@@ -175,6 +178,10 @@ const DownloadForm = () => {
               Sorry, due to TikTok and browser restrictions, some videos cannot be downloaded directly on mobile devices.<br />
               <b>For best results, please use a desktop browser.</b>
             </p>
+            <div style={{ background: '#fff7f7', borderRadius: 12, padding: 12, margin: '12px 0', color: '#fe2c55', fontWeight: 500, animation: 'fadeIn 0.7s' }}>
+              <span style={{ fontSize: 18, marginRight: 6 }}>💡</span>
+              <span>Tip: Tap your browser menu and select <b>“Desktop Site”</b> for better download success on mobile!</span>
+            </div>
             <Button onClick={() => setShowMobileError(false)} className="download-btn" style={{ marginTop: 8 }}>
               OK
             </Button>
