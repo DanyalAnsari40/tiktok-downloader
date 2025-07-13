@@ -10,6 +10,7 @@ const DownloadForm = () => {
   const [progress, setProgress] = useState(0);
   const [downloadStatus, setDownloadStatus] = useState('');
   const [error, setError] = useState('');
+  const [showPostDownload, setShowPostDownload] = useState(false);
   const { downloadVideo } = useContext(DownloadContext);
 
   const handleSubmit = async (e) => {
@@ -20,16 +21,16 @@ const DownloadForm = () => {
     setProgress(0);
     setDownloadStatus('Starting download...');
     setError('');
+    setShowPostDownload(false);
 
     try {
       await downloadVideo(url, (progressData) => {
         setProgress(progressData.progress || 0);
         setDownloadStatus(progressData.status || 'Downloading...');
       });
-      
       setDownloadStatus('Download completed!');
       setUrl(''); // Clear URL after successful download
-      
+      setShowPostDownload(true);
       setTimeout(() => {
         setIsDownloading(false);
         setProgress(0);
@@ -39,7 +40,6 @@ const DownloadForm = () => {
       console.error('Download failed:', error);
       setError(error.message || 'Download failed. Please try again.');
       setDownloadStatus('Download failed!');
-      
       setTimeout(() => {
         setIsDownloading(false);
         setProgress(0);
@@ -48,6 +48,9 @@ const DownloadForm = () => {
       }, 3000);
     }
   };
+
+  // Detect mobile device
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   return (
     <div className="download-form-container">
@@ -69,7 +72,6 @@ const DownloadForm = () => {
             {isDownloading ? 'Downloading...' : 'Download'}
           </Button>
         </div>
-        
         {/* Error Message */}
         {error && (
           <div className="error-message">
@@ -114,6 +116,30 @@ const DownloadForm = () => {
             </div>
             <div className="download-status">{downloadStatus}</div>
             <Loader />
+          </div>
+        </div>
+      )}
+
+      {/* Post-download popup for mobile instructions */}
+      {showPostDownload && (
+        <div className="download-popup">
+          <div className="download-popup-content">
+            <h3 style={{ color: '#fe2c55', marginBottom: 12 }}>Video Saved!</h3>
+            <p style={{ marginBottom: 16 }}>
+              The video has been saved to your device's Downloads folder.
+            </p>
+            {isMobile && (
+              <div style={{ marginBottom: 16, fontSize: 15 }}>
+                <b>How to add to your gallery:</b>
+                <ul style={{ textAlign: 'left', margin: '8px 0 0 0', paddingLeft: 18 }}>
+                  <li><b>Android:</b> Open the <b>Files</b> or <b>Downloads</b> app, find the video, and move or share it to your Gallery/Photos app.</li>
+                  <li><b>iPhone/iPad:</b> Open the <b>Files</b> app, go to Downloads, tap the video, then tap <b>Share</b> &rarr; <b>Save Video</b> to add it to Photos.</li>
+                </ul>
+              </div>
+            )}
+            <Button onClick={() => setShowPostDownload(false)} className="download-btn" style={{ marginTop: 8 }}>
+              OK
+            </Button>
           </div>
         </div>
       )}
