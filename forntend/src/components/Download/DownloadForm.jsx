@@ -12,6 +12,7 @@ const DownloadForm = () => {
   const [error, setError] = useState('');
   const [showPostDownload, setShowPostDownload] = useState(false);
   const [lastDownloadUrl, setLastDownloadUrl] = useState(null);
+  const [showMobileError, setShowMobileError] = useState(false);
   const { downloadVideo } = useContext(DownloadContext);
 
   const handleSubmit = async (e) => {
@@ -24,6 +25,7 @@ const DownloadForm = () => {
     setError('');
     setShowPostDownload(false);
     setLastDownloadUrl(null);
+    setShowMobileError(false);
 
     try {
       const result = await downloadVideo(url, (progressData) => {
@@ -43,6 +45,10 @@ const DownloadForm = () => {
       console.error('Download failed:', error);
       setError(error.message || 'Download failed. Please try again.');
       setDownloadStatus('Download failed!');
+      // Show mobile-friendly error if on mobile
+      if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        setShowMobileError(true);
+      }
       setTimeout(() => {
         setIsDownloading(false);
         setProgress(0);
@@ -83,7 +89,7 @@ const DownloadForm = () => {
           </Button>
         </div>
         {/* Error Message */}
-        {error && (
+        {error && !showMobileError && (
           <div className="error-message">
             <span className="error-icon">⚠️</span>
             {error}
@@ -153,6 +159,23 @@ const DownloadForm = () => {
               </>
             )}
             <Button onClick={() => setShowPostDownload(false)} className="download-btn" style={{ marginTop: 8 }}>
+              OK
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile-friendly error popup with animation */}
+      {showMobileError && (
+        <div className="download-popup">
+          <div className="download-popup-content" style={{ textAlign: 'center', animation: 'shake 0.5s' }}>
+            <div style={{ fontSize: 48, marginBottom: 12, color: '#fe2c55', animation: 'bounce 1s infinite alternate' }}>📱</div>
+            <h3 style={{ color: '#fe2c55', marginBottom: 10 }}>Download Not Supported on Mobile</h3>
+            <p style={{ color: '#444', marginBottom: 16 }}>
+              Sorry, due to TikTok and browser restrictions, some videos cannot be downloaded directly on mobile devices.<br />
+              <b>For best results, please use a desktop browser.</b>
+            </p>
+            <Button onClick={() => setShowMobileError(false)} className="download-btn" style={{ marginTop: 8 }}>
               OK
             </Button>
           </div>
