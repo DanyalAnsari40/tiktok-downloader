@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { downloadVideo, getDownloadHistory, getDownload } = require('../controllers/downloadController');
+const downloadController = require('../controllers/downloadController');
 
-router.post('/', downloadVideo);
-router.get('/history', getDownloadHistory);
-router.get('/:id', getDownload);
+router.post('/', downloadController.downloadVideo);
+
+// Experimental: Proxy video stream from external URL to client
+router.get('/proxy', downloadController.proxyVideo);
 
 module.exports = router;

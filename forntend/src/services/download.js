@@ -16,8 +16,9 @@ export const downloadVideo = async (url) => {
       const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
       if (isMobile) {
-        // On mobile, open the direct video URL in a new tab
-        window.open(result.downloadUrl, '_blank');
+        // On mobile, use the backend proxy endpoint to bypass CORS
+        const proxyUrl = `${import.meta.env.VITE_API_URL || ''}/api/download/proxy?url=${encodeURIComponent(result.downloadUrl)}`;
+        window.open(proxyUrl, '_blank');
       } else {
         // On desktop, fetch as blob and trigger download
         try {

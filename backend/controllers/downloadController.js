@@ -98,3 +98,30 @@ exports.getDownload = async (req, res) => {
     res.status(500).json({ msg: 'Failed to get download details' });
   }
 };
+
+// Experimental: Proxy video stream from external URL to client
+exports.proxyVideo = async (req, res) => {
+  const { url } = req.query;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ success: false, msg: 'Invalid video URL for proxy.' });
+  }
+  try {
+    const axiosResponse = await axios({
+      method: 'GET',
+      url,
+      responseType: 'stream',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'video/mp4,video/*,*/*;q=0.9',
+        'Referer': 'https://www.tiktok.com/'
+      },
+      timeout: 120000
+    });
+    res.setHeader('Content-Type', axiosResponse.headers['content-type'] || 'video/mp4');
+    res.setHeader('Content-Disposition', 'attachment; filename="tiktok_video.mp4"');
+    axiosResponse.data.pipe(res);
+  } catch (err) {
+    console.error('Proxy video error:', err.message);
+    res.status(500).json({ success: false, msg: 'Failed to proxy video.', error: err.message });
+  }
+};
