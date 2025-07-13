@@ -1,4 +1,5 @@
 const { downloadTikTok } = require('../services/tiktokService');
+const { downloadWithMobileAPIs, getAvailableAPIs, testAPI } = require('../services/mobileDownloadService');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -6,31 +7,41 @@ const { exec } = require('child_process');
 const util = require('util');
 const execAsync = util.promisify(exec);
 
-// Download TikTok video
+// Download video using mobile-friendly APIs
 exports.downloadVideo = async (req, res) => {
   try {
-    const { url } = req.body;
+    const { url, useMobileAPIs = true } = req.body;
     
     // Validate input
     if (!url) {
       return res.status(400).json({ 
         success: false,
-        msg: 'TikTok URL is required' 
+        msg: 'Video URL is required' 
       });
     }
 
-    // Validate TikTok URL
-    if (!url.includes('tiktok.com')) {
+    // Validate URL (support TikTok, Instagram, YouTube)
+    const supportedPlatforms = ['tiktok.com', 'instagram.com', 'youtube.com', 'youtu.be'];
+    const isValidUrl = supportedPlatforms.some(platform => url.includes(platform));
+    
+    if (!isValidUrl) {
       return res.status(400).json({ 
         success: false,
-        msg: 'Please provide a valid TikTok URL' 
+        msg: 'Please provide a valid TikTok, Instagram, or YouTube URL' 
       });
     }
 
-    console.log('Downloading TikTok video:', url);
+    console.log('Downloading video:', url);
 
-    // Download TikTok video
-    const videoInfo = await downloadTikTok(url);
+    let videoInfo;
+    
+    // Use mobile APIs if requested or for Instagram/YouTube
+    if (useMobileAPIs || url.includes('instagram.com') || url.includes('youtube.com') || url.includes('youtu.be')) {
+      videoInfo = await downloadWithMobileAPIs(url);
+    } else {
+      // Fallback to original TikTok service for TikTok URLs
+      videoInfo = await downloadTikTok(url);
+    }
 
     console.log('Video info received:', videoInfo);
 
@@ -123,5 +134,50 @@ exports.proxyVideo = async (req, res) => {
   } catch (err) {
     console.error('Proxy video error:', err.message);
     res.status(500).json({ success: false, msg: 'Failed to proxy video.', error: err.message });
+  }
+};
+
+// Get available APIs for a platform
+exports.getAvailableAPIs = async (req, res) => {
+  try {
+    const { platform } = req.params;
+    const apis = getAvailableAPIs(platform);
+    
+    res.json({
+      success: true,
+      platform: platform,
+      apis: apis,
+      count: apis.length
+    });
+  } catch (err) {
+    console.error('Get APIs error:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      msg: 'Failed to get available APIs',
+      error: err.message 
+    });
+  }
+};
+
+// Test API connectivity
+exports.testAPI = async (req, res) => {
+  try {
+    const { apiName } = req.params;
+    const result = await testAPI(apiName);
+    
+    res.json({
+      success: result.success,
+      api: apiName,
+      message: result.message,
+      status: result.status,
+      error: result.error
+    });
+  } catch (err) {
+    console.error('Test API error:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      msg: 'Failed to test API',
+      error: err.message 
+    });
   }
 };
