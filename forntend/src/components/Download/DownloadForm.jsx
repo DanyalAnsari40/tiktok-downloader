@@ -38,20 +38,28 @@ const DownloadForm = () => {
         setProgress(progressData.progress || 0);
         setDownloadStatus(progressData.status || 'Downloading...');
       }, isMobileDesktopSite);
-      setDownloadStatus('Download completed!');
-      setUrl(''); // Clear URL after successful download
-      setShowPostDownload(true);
-      setLastDownloadUrl(result && result.downloadUrl ? result.downloadUrl : null);
-      setTimeout(() => {
-        setIsDownloading(false);
-        setProgress(0);
-        setDownloadStatus('');
-      }, 2000);
+
+      // If a valid downloadUrl is returned, show post-download popup (even on mobile)
+      if (result && result.downloadUrl) {
+        setDownloadStatus('Download completed!');
+        setUrl(''); // Clear URL after successful download
+        setShowPostDownload(true);
+        setLastDownloadUrl(result.downloadUrl);
+        setTimeout(() => {
+          setIsDownloading(false);
+          setProgress(0);
+          setDownloadStatus('');
+        }, 2000);
+        return;
+      }
+
+      // If no valid downloadUrl, treat as error
+      throw new Error(result && result.message ? result.message : 'Download failed. Please try again.');
     } catch (error) {
       console.error('Download failed:', error);
       setError(error.message || 'Download failed. Please try again.');
       setDownloadStatus('Download failed!');
-      // Show mobile-friendly error if on mobile
+      // Only show mobile error popup if there is no valid downloadUrl
       if (isMobile && !isMobileDesktopSite) {
         setShowMobileError(true);
       }
