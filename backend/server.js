@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const downloadRoutes = require('./routes/downloadRoutes');
 const errorHandler = require('./utils/errorHandler');
 
@@ -13,24 +12,20 @@ const corsOrigins = process.env.CORS_ORIGINS
   : [
       'http://localhost:3000',
       'http://localhost:5173',
-      'https://tiktok-downloader-frontend.vercel.app',
-      'https://tiktok-downloader.vercel.app'
+      'https://tik-downloader.netlify.app'
     ];
 
 // CORS configuration
 app.use(cors({
   origin: corsOrigins,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-
-// Serve downloaded files (only in development)
-if (process.env.NODE_ENV !== 'production') {
-  app.use('/downloads', express.static(path.join(__dirname, 'downloads')));
-}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -38,7 +33,8 @@ app.get('/api/health', (req, res) => {
     status: 'OK', 
     message: 'TikTok Downloader API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    corsOrigins: corsOrigins
   });
 });
 
@@ -47,16 +43,26 @@ app.use('/api/download', downloadRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+  res.status(404).json({ 
+    message: 'Route not found',
+    availableRoutes: ['/api/health', '/api/download/tiktok']
+  });
 });
 
 // Error handling
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📱 Frontend URLs: ${corsOrigins.join(', ')}`);
-  console.log(`🔗 API URL: http://localhost:${PORT}`);
-});
+
+// For Vercel, export the app
+if (process.env.NODE_ENV === 'production') {
+  module.exports = app;
+} else {
+  // For local development
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📱 Frontend URLs: ${corsOrigins.join(', ')}`);
+    console.log(`🔗 API URL: http://localhost:${PORT}`);
+  });
+}
