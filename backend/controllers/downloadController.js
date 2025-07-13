@@ -7,41 +7,31 @@ const { exec } = require('child_process');
 const util = require('util');
 const execAsync = util.promisify(exec);
 
-// Download video using mobile-friendly APIs
+// Download TikTok video (reverted to original logic)
 exports.downloadVideo = async (req, res) => {
   try {
-    const { url, useMobileAPIs = true } = req.body;
+    const { url } = req.body;
     
     // Validate input
     if (!url) {
       return res.status(400).json({ 
         success: false,
-        msg: 'Video URL is required' 
+        msg: 'TikTok URL is required' 
       });
     }
 
-    // Validate URL (support TikTok, Instagram, YouTube)
-    const supportedPlatforms = ['tiktok.com', 'instagram.com', 'youtube.com', 'youtu.be'];
-    const isValidUrl = supportedPlatforms.some(platform => url.includes(platform));
-    
-    if (!isValidUrl) {
+    // Validate TikTok URL
+    if (!url.includes('tiktok.com')) {
       return res.status(400).json({ 
         success: false,
-        msg: 'Please provide a valid TikTok, Instagram, or YouTube URL' 
+        msg: 'Please provide a valid TikTok URL' 
       });
     }
 
-    console.log('Downloading video:', url);
+    console.log('Downloading TikTok video:', url);
 
-    let videoInfo;
-    
-    // Use mobile APIs if requested or for Instagram/YouTube
-    if (useMobileAPIs || url.includes('instagram.com') || url.includes('youtube.com') || url.includes('youtu.be')) {
-      videoInfo = await downloadWithMobileAPIs(url);
-    } else {
-      // Fallback to original TikTok service for TikTok URLs
-      videoInfo = await downloadTikTok(url);
-    }
+    // Download TikTok video
+    const videoInfo = await downloadTikTok(url);
 
     console.log('Video info received:', videoInfo);
 
