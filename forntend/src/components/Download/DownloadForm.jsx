@@ -11,6 +11,7 @@ const DownloadForm = () => {
   const [downloadStatus, setDownloadStatus] = useState('');
   const [error, setError] = useState('');
   const [showPostDownload, setShowPostDownload] = useState(false);
+  const [lastDownloadUrl, setLastDownloadUrl] = useState(null);
   const { downloadVideo } = useContext(DownloadContext);
 
   const handleSubmit = async (e) => {
@@ -22,15 +23,17 @@ const DownloadForm = () => {
     setDownloadStatus('Starting download...');
     setError('');
     setShowPostDownload(false);
+    setLastDownloadUrl(null);
 
     try {
-      await downloadVideo(url, (progressData) => {
+      const result = await downloadVideo(url, (progressData) => {
         setProgress(progressData.progress || 0);
         setDownloadStatus(progressData.status || 'Downloading...');
       });
       setDownloadStatus('Download completed!');
       setUrl(''); // Clear URL after successful download
       setShowPostDownload(true);
+      setLastDownloadUrl(result && result.downloadUrl ? result.downloadUrl : null);
       setTimeout(() => {
         setIsDownloading(false);
         setProgress(0);
@@ -51,6 +54,13 @@ const DownloadForm = () => {
 
   // Detect mobile device
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  // Handler for Save to Device button
+  const handleSaveToDevice = () => {
+    if (lastDownloadUrl) {
+      window.open(lastDownloadUrl, '_blank');
+    }
+  };
 
   return (
     <div className="download-form-container">
@@ -128,14 +138,19 @@ const DownloadForm = () => {
             <p style={{ marginBottom: 16 }}>
               The video has been saved to your device's Downloads folder.
             </p>
-            {isMobile && (
-              <div style={{ marginBottom: 16, fontSize: 15 }}>
-                <b>How to add to your gallery:</b>
-                <ul style={{ textAlign: 'left', margin: '8px 0 0 0', paddingLeft: 18 }}>
-                  <li><b>Android:</b> Open the <b>Files</b> or <b>Downloads</b> app, find the video, and move or share it to your Gallery/Photos app.</li>
-                  <li><b>iPhone/iPad:</b> Open the <b>Files</b> app, go to Downloads, tap the video, then tap <b>Share</b> &rarr; <b>Save Video</b> to add it to Photos.</li>
-                </ul>
-              </div>
+            {isMobile && lastDownloadUrl && (
+              <>
+                <Button onClick={handleSaveToDevice} className="download-btn" style={{ marginBottom: 12 }}>
+                  Save to Device
+                </Button>
+                <div style={{ marginBottom: 16, fontSize: 15 }}>
+                  <b>How to add to your gallery:</b>
+                  <ul style={{ textAlign: 'left', margin: '8px 0 0 0', paddingLeft: 18 }}>
+                    <li><b>Android:</b> Open the <b>Files</b> or <b>Downloads</b> app, find the video, and move or share it to your Gallery/Photos app.</li>
+                    <li><b>iPhone/iPad:</b> Open the <b>Files</b> app, go to Downloads, tap the video, then tap <b>Share</b> &rarr; <b>Save Video</b> to add it to Photos.</li>
+                  </ul>
+                </div>
+              </>
             )}
             <Button onClick={() => setShowPostDownload(false)} className="download-btn" style={{ marginTop: 8 }}>
               OK
